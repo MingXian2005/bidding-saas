@@ -1,0 +1,187 @@
+@font-face {
+    font-family: 'Cal Sans';
+    src: url('CalSans-Regular.eot');
+    src: local('Cal Sans Regular'), local('CalSans-Regular'),
+        url('CalSans-Regular.eot?#iefix') format('embedded-opentype'),
+        url('CalSans-Regular.woff2') format('woff2'),
+        url('CalSans-Regular.woff') format('woff'),
+        url('CalSans-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Liberal Condensed';
+    src: url('LiberalCondensed-Regular.eot');
+    src: local('Liberal Condensed Regular'), local('LiberalCondensed-Regular'),
+        url('LiberalCondensed-Regular.eot?#iefix') format('embedded-opentype'),
+        url('LiberalCondensed-Regular.woff2') format('woff2'),
+        url('LiberalCondensed-Regular.woff') format('woff'),
+        url('LiberalCondensed-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Liter';
+    src: url('Liter-Regular.eot');
+    src: local('Liter Regular'), local('Liter-Regular'),
+        url('Liter-Regular.eot?#iefix') format('embedded-opentype'),
+        url('Liter-Regular.woff2') format('woff2'),
+        url('Liter-Regular.woff') format('woff'),
+        url('Liter-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('Inter-Regular.eot');
+    src: local('Inter Regular'), local('Inter-Regular'),
+        url('Inter-Regular.eot?#iefix') format('embedded-opentype'),
+        url('Inter-Regular.woff2') format('woff2'),
+        url('Inter-Regular.woff') format('woff'),
+        url('Inter-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+body {
+    display: block;
+    margin: 0 auto; /* this centers the body horizontally */
+    width: 80%; 
+    font-family:  Helvetica, Arial, sans-serif;;
+}
+
+/* Basic styling for the navbar container */
+.navbar {
+    background-color: #f1f1f1;
+    border: 1px solid #ccc;
+    overflow: hidden;
+    border-bottom: 1px solid #ccc; /* Underline for the whole bar */
+}
+
+/* Style for the links inside the navbar */
+.navbar a {
+    float: left;
+    display: block;
+    color: black;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    font-size: 17px;
+    border-right: 1px solid #ccc;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    position: relative;
+    top: -1px; /* Lifts the tabs up slightly */
+    margin: 0 2px;
+}
+
+/* Change color on hover */
+.navbar a:hover {
+    background-color: #ddd;
+}
+
+/* Style for the active/current link */
+.navbar a.active {
+    background-color: #fff;
+    border-bottom: 1px solid #fff;
+    color: #333;
+    font-weight: bold;
+}
+
+/* Right-aligned links */
+.navbar-right {
+    float: right;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+h1 {
+    text-align: center;
+    font-size: 3em;
+}
+
+.maindiv > div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.maindiv .class1, .maindiv form {
+    width: 48%;
+    margin-top: 25px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    font-size: 1.2em;
+}
+
+.maindiv form {
+    width: 100%;
+    margin-top: 25px;
+    margin-bottom: 40px;
+    box-sizing: border-box;
+    font-size: 1.2em;
+}
+
+.maindiv .class1 img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.maindiv .Rside {
+    font-size: 1.2em;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    /* padding-left: 20px; */
+}
+
+.maindiv .lowestbid {
+  font-size: 1.5em; 
+  color: rgb(241, 15, 15);
+}
+
+.maindiv .latestbid {
+  font-size: 1.5em;
+  /* color: rgb(43, 20, 218); */
+}
+
+.class2 {
+    text-align: right;
+}
+
+.update-log {
+    padding-bottom: 30px;
+}
+
+#bid-btn {
+    width: 205px;
+    height: 40px;
+    font-size: 20px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}

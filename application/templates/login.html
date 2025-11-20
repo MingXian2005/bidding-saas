@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet"
+href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.c
+ss" integrity="sha384-
+Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+crossorigin="anonymous">
+  <title>Visitor Pre-Registration</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; background: #f7f9fc; }
+    form { background: white; padding: 2rem; border-radius: 8px; max-width: 500px; margin: auto; }
+    label { display: block; margin-top: 1rem; font-weight: bold; }
+    input, select, textarea { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border-radius: 4px; border: 1px solid #ccc; }
+    button { margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .flash { background: #d4edda; color: #155724; padding: 1rem; border-radius: 4px; max-width: 500px; margin: 1rem auto; }
+    .pad-bot { padding-bottom: 10px;}
+  </style>
+</head>
+<body>
+
+  <!-- {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="flash">
+        {% for msg in messages %}
+          <p>{{ msg }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %} -->
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="flash">
+      <p>{{ messages[-1] }}</p>
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% block content %}
+<div class="row">
+<div class="col-md-6 offset-md-3">
+<form action="/auth" method="post" novalidate>
+<fieldset class="form-group">
+<legend>{{title}}</legend>
+{{ form.hidden_tag() }}
+<p class="pad-bot">
+{{ form.display_name.label }}
+{{ form.display_name(class_='form-control') }}
+{% for error in form.display_name.errors %}
+<span class="error-message">{{ error }}</span>
+{% endfor %}
+</p>
+<p class="pad-bot">
+{{ form.password.label }}
+{{ form.password(class_='form-control') }}
+{% for error in form.password.errors %}
+<span class="error-message">{{ error }}</span>
+{% endfor %}
+</p>
+<p>
+{{ form.submit(class_='form-control btn-primary') }}
+</p>
+</fieldset>
+</form>
+</div>
+<hr>
+
+</div>
+{% endblock %}
+</body>
+</html>
+

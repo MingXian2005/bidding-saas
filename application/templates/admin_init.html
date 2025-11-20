@@ -1,0 +1,24 @@
+{% block content %}
+<div class="container">
+    <h2>Set Auction Initials</h2>
+    <form method="POST" action="/admin/init/post">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.StartingBid.label(class="form-control-label") }}
+            {{ form.StartingBid(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.BidDecrement.label(class="form-control-label") }}
+            {{ form.BidDecrement(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+
+    <form action="{{ url_for('reset') }}" method="post">
+        <button type="submit" onclick="return confirm('Are you sure you want to reset all bids and timer?')">Reset
+            Auction</button>
+    </form>
+</div>
+{% endblock %}

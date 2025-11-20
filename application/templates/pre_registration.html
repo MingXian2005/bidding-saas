@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Visitor Pre-Registration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f7f9fc;
+    }
+
+    form {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1.5rem;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .flash {
+      background: #d4edda;
+      color: #155724;
+      padding: 1rem;
+      border-radius: 4px;
+      max-width: 500px;
+      margin: 1rem auto;
+    }
+  </style>
+</head>
+
+<body>
+
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+  <div class="flash">
+    {% for msg in messages %}
+    <p>{{ msg }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <form action="{{ url_for('submit') }}" method="post" enctype="multipart/form-data">
+    <h2>Visitor Pre-Registration Form</h2>
+
+    <label for="full_name">Full Name *</label>
+    <input type="text" id="full_name" name="full_name" required />
+
+    <label for="contact_number">Contact Number *</label>
+    <input type="tel" id="contact_number" name="contact_number" required />
+
+    <label for="email">Email Address *</label>
+    <input type="email" id="email" name="email" required />
+
+    <label for="company">Company / Organization</label>
+    <input type="text" id="company" name="company" />
+
+    <label for="purpose">Purpose of Visit</label>
+    <textarea id="purpose" name="purpose" rows="2"></textarea>
+
+    <label for="host">Person to Visit / Host</label>
+    <input type="text" id="host" name="host" />
+
+    <label for="visit_date">Date of Visit *</label>
+    <input type="date" id="visit_date" name="visit_date" required />
+
+    <label for="visit_time">Time of Visit</label>
+    <input type="time" id="visit_time" name="visit_time" />
+
+    <label for="id_type">ID Type</label>
+    <select id="id_type" name="id_type">
+      <option value="" selected disabled>Select ID Type</option>
+      <option value="Passport">Passport</option>
+      <option value="NRIC">NRIC</option>
+      <option value="Driver's License">Driver's License</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <label for="id_number">ID Number</label>
+    <input type="text" id="id_number" name="id_number" />
+
+    <label for="document">Upload Document (PDF, JPG, PNG)</label>
+    <input type="file" id="document" name="document" accept=".pdf,.jpg,.jpeg,.png" />
+
+    <button type="submit">Submit Pre-Registration</button>
+  </form>
+
+
+</body>
+
+</html>

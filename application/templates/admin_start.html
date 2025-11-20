@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block title %}Set Auction Timer{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="info-section">
+        <h2>Set Auction Timer</h2>
+        <form method="POST" action="{{ url_for('admin_start') }}">
+            {{ form.hidden_tag() }}
+            <p>
+                {{ form.start_time.label }}<br>
+                {{ form.start_time(size=40) }}<br>
+                {% for error in form.start_time.errors %}
+                <span style="color: red;">{{ error }}</span><br>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.duration.label }}<br>
+                {{ form.duration(size=20) }}<br>
+                {% for error in form.duration.errors %}
+                <span style="color: red;">{{ error }}</span><br>
+                {% endfor %}
+            </p>
+
+            <p>{{ form.submit() }}</p>
+        </form>
+    </div>
+</div>
+{% endblock %}

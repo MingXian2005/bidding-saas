@@ -1,0 +1,15 @@
+<table>
+  <tr><th>Display Name</th><th>IdentificationKey</th><th>Status</th><th>Action</th></tr>
+  {% for user in users %}
+  <tr>
+    <td>{{ user.display_name }}</td>
+    <td>{{ user.IdentificationKey }}</td>
+    <td>{{ "Blocked" if user.is_blocked else "Active" }}</td>
+    <td>
+      <form method="post" action="{{ url_for('toggle_block_user', user_id=user.id) }}">
+        <button type="submit">{{ "Unblock" if user.is_blocked else "Block" }}</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
