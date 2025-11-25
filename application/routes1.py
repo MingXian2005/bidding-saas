@@ -3,12 +3,13 @@ from application.forms import LoginForm, RegistrationForm, BidForm
 from application.models import Users, Bid, Timer, Initials
 from flask import render_template, request, flash, json, jsonify, redirect, url_for
 from flask_login import login_user, logout_user, login_required, current_user
-from . import admin
 import os
 from werkzeug.utils import secure_filename
 from sqlalchemy import asc, func, desc
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
+from application.admins import *
+from application.sysadmins import *
 
 ## Incase of directory issue from flask
 # import os
@@ -46,9 +47,16 @@ def auth():
         if user and user.check_password(loginform.password.data):
             login_user(user)
             flash('Login successful.', 'success')
-            return redirect(url_for('bid'))
+        # Redirect based on role
+        if user.sys_admin:
+            return redirect(url_for('sysadmin'))
+        elif user.is_admin:
+            return redirect(url_for('admin'))
         else:
+            return redirect(url_for('bid'))
+    else:
             flash('Invalid Identification Key or password.', 'danger')
+
     return render_template('login.html', form=loginform, title="Authentication")
 
 ################################################################################################
@@ -394,7 +402,7 @@ def bidding():
     else:
         auction_over = False  # or False, depending on your logic
 
-    if auction_over == True:
+    if auction_over or current_user.is_admin or current_user.sys_admin:
         # end_time_iso = timer.end_time.isoformat() if timer and timer.end_time else None
         if timer and timer.end_time:
             end_time_iso_utc = timer.end_time.replace(tzinfo=ZoneInfo('UTC'))
@@ -434,3 +442,4 @@ def reset():
 @app.route('/blocked')
 def blocked():
     return render_template('blocked.html')
+##############################################################################################

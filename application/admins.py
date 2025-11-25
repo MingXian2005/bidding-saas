@@ -1,5 +1,5 @@
 from application import app, db, socketio
-from application.models import Users, Timer, Initials, Bid
+from application.models import Users, Timer, Initials, Bid, Client
 from flask_login import current_user, login_required
 from functools import wraps
 from flask import render_template, request, flash, redirect, url_for, abort
@@ -7,6 +7,7 @@ from application.forms import RegistrationForm, TimerForm, InitialsForm, NewTime
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
+
 
 scheduler = BackgroundScheduler()
 scheduler.start()
@@ -16,7 +17,7 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
             abort(403)
-        if not current_user.is_admin:
+        if not (current_user.is_admin or current_user.sys_admin):
             abort(403)
         return f(*args, **kwargs)
     return decorated_function
@@ -162,7 +163,7 @@ def admin_init_post():
 @login_required
 @admin_required
 def admin_users():
-    users = Users.query.all()
+    users = Users.query.filter_by(sys_admin=False).all()
     return render_template('admin_users.html', users=users)
 
 @app.route('/admin/users/<int:user_id>/toggle_block', methods=['POST'])

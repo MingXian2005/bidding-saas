@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
     <title>{% block title %}Bidding System{% endblock %}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            /* margin: 20px; */
         }
         header {
             text-align: center;
@@ -52,10 +53,27 @@
             font-size: 1.2em;
             color: green;
         }
+        
     </style>
     {% block head %}{% endblock %}
 </head>
 <body>
+    <div class="navbar">
+        <a href="{{ url_for('bid') }}">Home</a>
+        <a href="{{ url_for('bidding') }}">Bid History</a>
+
+        {% if current_user.is_authenticated and (current_user.is_admin or current_user.sys_admin) %}
+        <a href="{{ url_for('admin') }}">Admin</a>
+        {% endif %}
+
+        {% if current_user.is_authenticated and current_user.sys_admin %}
+        <a href="{{ url_for('sysadmin') }}">System Control</a>
+        {% endif %}
+
+        <div class="navbar-right">
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
     <header>
         <h1>{% block header %}Bidding System{% endblock %}</h1>
     </header>

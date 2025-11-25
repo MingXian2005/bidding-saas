@@ -8,8 +8,17 @@
 
 <body>
     <div class="navbar">
-        <a href="{{ url_for('bid') }}" class="active">Home</a>
+        <a href="{{ url_for('bid') }}">Home</a>
         <a href="{{ url_for('bidding') }}">Bid History</a>
+
+        {% if current_user.is_authenticated and (current_user.is_admin or current_user.sys_admin) %}
+        <a href="{{ url_for('admin') }}">Admin</a>
+        {% endif %}
+
+        {% if current_user.is_authenticated and current_user.sys_admin %}
+        <a href="{{ url_for('sysadmin') }}">System Control</a>
+        {% endif %}
+
         <div class="navbar-right">
             <a href="{{ url_for('logout') }}">Logout</a>
         </div>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+    <title>sysadmin</title>
+</head>
+
+<body>
+    <div class="navbar">
+        <a href="{{ url_for('bid') }}">Home</a>
+        <a href="{{ url_for('bidding') }}">Bid History</a>
+
+        {% if current_user.is_authenticated and (current_user.is_admin or current_user.sys_admin) %}
+        <a href="{{ url_for('admin') }}">Admin</a>
+        {% endif %}
+
+        {% if current_user.is_authenticated and current_user.sys_admin %}
+        <a href="{{ url_for('sysadmin') }}">System Control</a>
+        {% endif %}
+
+        <div class="navbar-right">
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="info-section">
+            <h2>Admin Links</h2>
+            <ul>
+                <li><a href="{{ url_for('sysadmin_register') }}">Register New User</a></li>
+                <li><a href="{{ url_for('sysadmin_users') }}">Manage Users</a></li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>

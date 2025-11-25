@@ -21,7 +21,16 @@
 <body>
     <div class="navbar">
         <a href="{{ url_for('bid') }}">Home</a>
-        <a href="{{ url_for('bidding') }}" class="active">Bid History</a>
+        <a href="{{ url_for('bidding') }}">Bid History</a>
+
+        {% if current_user.is_authenticated and (current_user.is_admin or current_user.sys_admin) %}
+        <a href="{{ url_for('admin') }}">Admin</a>
+        {% endif %}
+
+        {% if current_user.is_authenticated and current_user.sys_admin %}
+        <a href="{{ url_for('sysadmin') }}">System Control</a>
+        {% endif %}
+
         <div class="navbar-right">
             <a href="{{ url_for('logout') }}">Logout</a>
         </div>
@@ -31,7 +40,7 @@
         <h1>Bidding Rankings</h1>
         {% if timer %}
         <div id="timer" data-end-time="{{ end_time_iso.isoformat() }}"></div> <!--timer.end_time changed -->
-        {% endif %}     
+        {% endif %}
         <table>
             <thead>
                 <tr>
@@ -47,9 +56,9 @@
                     <td>{{ loop.index }}</td>
                     <td>
                         {% if bid.user.id == current_user.id %}
-                            {{ bid.user.display_name }}
+                        {{ bid.user.display_name }}
                         {% else %}
-                            {{ bid.user.IdentificationKey }}
+                        {{ bid.user.IdentificationKey }}
                         {% endif %}
                     </td>
                     <td>{{ "{:,.2f}".format(bid.amount) }}</td>
