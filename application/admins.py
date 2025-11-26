@@ -1,9 +1,9 @@
 from application import app, db, socketio
-from application.models import Users, Timer, Initials, Bid, Client
+from application.models import Users, Timer, Initials, Bid, Client, AuctionInfo
 from flask_login import current_user, login_required
 from functools import wraps
 from flask import render_template, request, flash, redirect, url_for, abort
-from application.forms import RegistrationForm, TimerForm, InitialsForm, NewTimerForm, NewTimerForm2
+from application.forms import RegistrationForm, TimerForm, InitialsForm, NewTimerForm, NewTimerForm2, AuctionInfoForm
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -178,11 +178,26 @@ def admin_init_post():
         # Initials.query.delete()
         Initials.query.filter_by(client_id=current_user.client_id).delete()
         db.session.commit()
-        new_initials = Initials(StartingBid=StartingBid, BidDecrement=BidDecrement, client_id=current_user.client_id)
+        new_initials = Initials(
+            StartingBid=StartingBid,
+            BidDecrement=BidDecrement,
+            client_id=current_user.client_id
+        )
         db.session.add(new_initials)
         db.session.commit()
+
+        socketio.emit(
+            'initials_updated',
+            {
+                'StartingBid': StartingBid,
+                'BidDecrement': BidDecrement
+            },
+            room=f'client_{current_user.client_id}'
+        )
+
         flash('New initials set successfully!', 'success')
         return redirect(url_for('admin_init'))
+    
     return render_template('admin_init.html', form=form, title="Admin Init")
 
 @app.route('/admin/users')
@@ -324,3 +339,49 @@ def admin_close():
         flash(f'Auction timer set.', 'success')
         return redirect(url_for('admin_close'))
     return render_template('admin_close.html', form=form, title="Admin Close")
+
+@app.route('/admin/aucinfo', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_info():
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
+
+    form = AuctionInfoForm()
+
+    # Try to get existing auction info for this client
+    aucinfo = AuctionInfo.query.filter_by(client_id=current_user.client_id).first()
+
+    # Pre-fill form if info exists
+    if aucinfo and request.method == 'GET':
+        form.title.data = aucinfo.title
+        form.address.data = aucinfo.address
+
+    if form.validate_on_submit():
+        if aucinfo:
+            # Update existing info
+            aucinfo.title = form.title.data
+            aucinfo.address = form.address.data
+        else:
+            # Create new info
+            aucinfo = AuctionInfo(
+                title=form.title.data,
+                address=form.address.data,
+                client_id=current_user.client_id
+            )
+            db.session.add(aucinfo)
+
+        db.session.commit()
+        socketio.emit(
+            'auction_info_updated',
+            {
+                'title': aucinfo.title,
+                'address': aucinfo.address
+            },
+            room=f'client_{current_user.client_id}'
+        )
+
+        flash("Auction info saved successfully!", "success")
+        return redirect(url_for('admin_info'))
+
+    return render_template("admin_info.html", form=form, title="Auction Info")

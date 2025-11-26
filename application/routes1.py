@@ -111,6 +111,9 @@ def bid():
     print("auction_started: ")
     print(auction_started)
 
+    # Get the auction info for this client
+    auction_info = AuctionInfo.query.filter_by(client_id=current_user.client_id).first()
+
     # Latest bid done by the user
     latest_bid = Bid.query.filter_by(user_id=current_user.id).order_by(Bid.timestamp.desc()).first()
 
@@ -308,7 +311,6 @@ def bid():
             else:
                 min_bid_amount = STARTING_PRICE - Decrement # or some fallback
 
-            
 
             # Emit real-time update
             socketio.emit('new_bid', {
@@ -319,7 +321,7 @@ def bid():
                 'user_rank': user_rank,
                 'user_id': current_user.id,
                 'min_bid_amount': min_bid_amount,
-                'max_bid_amount': max_bid_amount
+                'max_bid_amount': max_bid_amount,
             }, room=room)
 
             flash('Your bid has been placed successfully!', 'success')
@@ -406,7 +408,8 @@ def bid():
         bids=bids,
         max_bid_amount=max_bid_amount,
         desig_auc_strt_time=desig_auc_strt_time,
-        auction_force_end_time=auction_force_end_time
+        auction_force_end_time=auction_force_end_time,
+        auction_info=auction_info
     )
 
 ################################################################################################

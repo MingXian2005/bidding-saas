@@ -57,16 +57,30 @@
                 <div class="class1">
                     <img src="../static/uploads/warehouse.png" alt="warehouse.png" style="margin-top: 30px;">
                     <p style="margin-top: 25px; font-size: 21px;">
-                       Address📌: <br>
-                         PTD 108443, JALAN SEROJA 28, BANDAR INDAPURA,<br>
-                         MUKIM KULAI, DAERAH KULAI, JOHOR DARUL TA'ZIM
+                        Address📌: <br>
+                        <span id="auction-address">
+                            {% if auction_info %}
+                            {{ auction_info.address }}
+                            {% else %}
+                            Address not set
+                            {% endif %}
+                        </span>
                     </p>
                 </div>
                 <div class="class1">
-                    <h2 style="margin-bottom: 15px;">Tender for INDAPURA, KULAI Warehouse/Factory</h2>
-                    <div class="Rside">Starting Price: RM{{ "{:,.2f}".format(starting_price) or "0.00" }}</div>
-                    <div class="Rside">Min Lot Decrement: RM{{ "{:,.2f}".format(decrement) or "0.00" }}</div>
-
+                    <h2 style="margin-bottom: 15px;" id="auction-title">
+                        {% if auction_info %}
+                        {{ auction_info.title }}
+                        {% else %}
+                        Auction title not set
+                        {% endif %}
+                    </h2>
+                    <div class="Rside">
+                        Starting Price: RM <span id="startingBid">{{ "{:,.2f}".format(starting_price) or "0.00"}}</span>
+                    </div>
+                    <div class="Rside">
+                        Min Lot Decrement: RM <span id="bidDecrement">{{ "{:,.2f}".format(decrement) or "0.00" }}</span>
+                    </div>
                     {% if latest_bid %}
                     <div class="Rside latestbid">
                         <strong>Your Latest Bid:</strong>
@@ -202,6 +216,37 @@
                 // Option 1: Update timer UI to show auction started
                 // Option 2: Refresh page
                 window.location.reload();
+            });
+
+            //Auction title and address
+            socket.on("auction_info_updated", (data) => {
+                console.log("Auction info updated:", data);
+
+                document.getElementById("auction-title").innerText = data.title;
+                document.getElementById("auction-address").innerText = data.address;
+            });
+
+            //Starting Bid and Decrement
+            socket.on('initials_updated', (data) => {
+                console.log("Initials updated:", data);
+
+                // Money formatter
+                function formatMoney(n) {
+                    return Number(n || 0).toLocaleString('en-SG', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                }
+
+                if (data.StartingBid !== undefined) {
+                    document.getElementById('startingBid').innerText =
+                        formatMoney(data.StartingBid);
+                }
+
+                if (data.BidDecrement !== undefined) {
+                    document.getElementById('bidDecrement').innerText =
+                        formatMoney(data.BidDecrement);
+                }
             });
 
             // Update bids and UI on new bid event

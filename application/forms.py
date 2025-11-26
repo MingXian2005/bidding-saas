@@ -26,7 +26,6 @@ class BidForm(FlaskForm):
     amount = FloatField('Bid Amount (RM)', validators=[InputRequired(), NumberRange(min=0.01)])
     submit = SubmitField('Place Bid')
 
-
 class LoginForm(FlaskForm):
     display_name = StringField('Company Name', 
             validators=[InputRequired()], render_kw={"placeholder": "Company Name"})
@@ -34,7 +33,6 @@ class LoginForm(FlaskForm):
             validators=[InputRequired()], render_kw={"placeholder": "Password"})
     
     submit = SubmitField('Login')
-
 
 class TimerForm(FlaskForm):
     duration = IntegerField('Auction Duration (minutes)', validators=[InputRequired(), NumberRange(min=1)])
@@ -53,9 +51,12 @@ class NewTimerForm2(FlaskForm):
     # force_end_time = DateTimeField('End Time', format='%Y-%m-%d %H:%M:%S', validators=[InputRequired()], render_kw={"placeholder": "%Y-%m-%d %H:%M:%S, 24hrs"})
     submit = SubmitField('Set Timer')
 
-
-
 class InitialsForm(FlaskForm):
     StartingBid = FloatField('Starting Bid ($)', validators=[InputRequired()])
     BidDecrement = FloatField('Next Bid Decrement($)', validators=[InputRequired()])
     submit = SubmitField('Confirm')
+
+class AuctionInfoForm(FlaskForm):
+    title = StringField("Auction Title", validators=[InputRequired()])
+    address = StringField("Address", validators=[InputRequired()])
+    submit = SubmitField("Save Auction Info")
