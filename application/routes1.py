@@ -82,12 +82,14 @@ def bid():
     
     form = BidForm()
     now = datetime.now(ZoneInfo("Asia/Singapore"))
+    room = f'client_{current_user.client_id}'
     AUCTION_EXTENSION = 60
 
     auction_started = False
     auction_force_end_time = None
     # Fetch latest timer
-    timer = Timer.query.order_by(Timer.id.desc()).first()
+    # timer = Timer.query.order_by(Timer.id.desc()).first()
+    timer = Timer.query.filter_by(client_id=current_user.client_id).order_by(Timer.id.desc()).first()
     end_time_iso = timer.end_time.isoformat() if timer and timer.end_time else None
 
     desig_auc_strt_time = None
@@ -139,16 +141,24 @@ def bid():
     print(time_left, "time_left, 1")
 
     # Get current lowest bid
-    lowest_bid = db.session.query(Bid).order_by(Bid.amount.asc()).first()
+    # lowest_bid = db.session.query(Bid).order_by(Bid.amount.asc()).first()
+    lowest_bid = (
+    Bid.query
+    .filter_by(client_id=current_user.client_id)
+    .order_by(Bid.amount.asc())
+    .first()
+    )
     lowest_bid_amount = lowest_bid.amount if lowest_bid else None 
 
     # Get decrement value
-    decrement = db.session.query(Initials).order_by(Initials.BidDecrement).first()
+    # decrement = db.session.query(Initials).order_by(Initials.BidDecrement).first()
+    decrement = Initials.query.filter_by(client_id=current_user.client_id).order_by(Initials.BidDecrement).first()
     Decrement = decrement.BidDecrement if decrement else 0
 
 
     # Get initial bid value
-    Starting_price = db.session.query(Initials).order_by(Initials.StartingBid).first()
+    # Starting_price = db.session.query(Initials).order_by(Initials.StartingBid).first()
+    Starting_price = Initials.query.filter_by(client_id=current_user.client_id).order_by(Initials.StartingBid).first()
     STARTING_PRICE = Starting_price.StartingBid if Starting_price else 1000
 
     # Get the value you to add into form
@@ -169,6 +179,7 @@ def bid():
             Bid.user_id,
             func.max(Bid.timestamp).label('max_timestamp')
         )
+        .filter(Bid.client_id == current_user.client_id)
         .group_by(Bid.user_id)
         .subquery()
     )
@@ -177,6 +188,7 @@ def bid():
     latest_bids = (
         db.session.query(Bid)
         .join(latest_bids_subq, (Bid.user_id == latest_bids_subq.c.user_id) & (Bid.timestamp == latest_bids_subq.c.max_timestamp))
+        .filter(Bid.client_id == current_user.client_id)
         .order_by(Bid.amount.asc())
         .all()
     )
@@ -209,7 +221,8 @@ def bid():
             flash(f'Your bid must not exceed 20% of the lowest bid (S$ {max_bid_amount:.2f}).', 'danger')
         else:
             # Get force end time
-            timer2 = Timer.query.order_by(Timer.id.desc()).first()
+            # timer2 = Timer.query.order_by(Timer.id.desc()).first()
+            timer2 = Timer.query.filter_by(client_id=current_user.client_id).order_by(Timer.id.desc()).first()
             auction_force_end_time =timer2.force_end_time
             auction_force_end_time = auction_force_end_time.replace(tzinfo=timezone.utc)
             auction_force_end_time = auction_force_end_time.astimezone(ZoneInfo("Asia/Singapore"))
@@ -222,15 +235,20 @@ def bid():
                 auction_end_time += timedelta(seconds=AUCTION_EXTENSION)
                 timer.end_time = auction_end_time
                 db.session.add(timer)
-                socketio.emit('timer_extended', {'end_time': auction_end_time.astimezone(timezone.utc).isoformat()})
+                socketio.emit('timer_extended', {'end_time': auction_end_time.astimezone(timezone.utc).isoformat()}, room=room)
 
             # Save bid
-            new_bid = Bid(amount=bid_value, user=current_user)
+            new_bid = Bid(amount=bid_value, user=current_user, client_id=current_user.client_id)
             db.session.add(new_bid)
             db.session.commit()
 
             # REFRESH lowest bid after bid is committed
-            lowest_bid = db.session.query(Bid).order_by(Bid.amount.asc()).first()
+            lowest_bid = (
+                Bid.query
+                .filter_by(client_id=current_user.client_id)
+                .order_by(Bid.amount.asc())
+                .first()
+            )
             lowest_bid_amount = lowest_bid.amount if lowest_bid else None
 
             # Recalculate max_bid_amount AFTER lowest_bid is refreshed
@@ -239,7 +257,13 @@ def bid():
             else:
                 max_bid_amount = STARTING_PRICE * 0.20
 
-            bids = Bid.query.order_by(asc(Bid.amount)).all()
+            # bids = Bid.query.order_by(asc(Bid.amount)).all()
+            bids = (
+                Bid.query
+                .filter_by(client_id=current_user.client_id)
+                .order_by(Bid.amount.asc())
+                .all()
+            )
             # Refresh latest_bid and user_rank after the new bid is saved
             latest_bid = Bid.query.filter_by(user_id=current_user.id).order_by(Bid.timestamp.desc()).first()
 
@@ -249,6 +273,7 @@ def bid():
                     Bid.user_id,
                     func.max(Bid.timestamp).label('max_timestamp')
                 )
+                .filter(Bid.client_id == current_user.client_id)
                 .group_by(Bid.user_id)
                 .subquery()
             )
@@ -256,6 +281,7 @@ def bid():
             latest_bids = (
                 db.session.query(Bid)
                 .join(latest_bids_subq, (Bid.user_id == latest_bids_subq.c.user_id) & (Bid.timestamp == latest_bids_subq.c.max_timestamp))
+                .filter(Bid.client_id == current_user.client_id)
                 .order_by(Bid.amount.asc())
                 .all()
             )
@@ -294,7 +320,7 @@ def bid():
                 'user_id': current_user.id,
                 'min_bid_amount': min_bid_amount,
                 'max_bid_amount': max_bid_amount
-            })
+            }, room=room)
 
             flash('Your bid has been placed successfully!', 'success')
             return redirect(url_for('bid'))
@@ -319,7 +345,13 @@ def bid():
     
     # timer = Timer.query.order_by(Timer.id.desc()).first()
     # end_time_iso = timer.end_time.isoformat() if timer and timer.end_time else None
-    bids = Bid.query.order_by(asc(Bid.amount)).all()
+    # bids = Bid.query.order_by(asc(Bid.amount)).all()
+    bids = (
+    Bid.query
+    .filter_by(client_id=current_user.client_id)
+    .order_by(Bid.amount.asc())
+    .all()
+    )
     # Refresh latest_bid and user_rank after the new bid is saved
     latest_bid = Bid.query.filter_by(user_id=current_user.id).order_by(Bid.timestamp.desc()).first()
 
@@ -335,6 +367,7 @@ def bid():
             Bid.user_id,
             func.max(Bid.timestamp).label('max_timestamp')
         )
+        .filter(Bid.client_id == current_user.client_id)
         .group_by(Bid.user_id)
         .subquery()
     )
@@ -342,6 +375,7 @@ def bid():
     latest_bids = (
         db.session.query(Bid)
         .join(latest_bids_subq, (Bid.user_id == latest_bids_subq.c.user_id) & (Bid.timestamp == latest_bids_subq.c.max_timestamp))
+        .filter(Bid.client_id == current_user.client_id)
         .order_by(Bid.amount.asc())
         .all()
     )
@@ -368,7 +402,7 @@ def bid():
         ranking=ranking,
         min_bid_amount=min_bid_amount,
         decrement=Decrement,
-        lowest_bidding = lowest_bid_amount,
+        lowest_bidding=lowest_bid_amount,
         bids=bids,
         max_bid_amount=max_bid_amount,
         desig_auc_strt_time=desig_auc_strt_time,
@@ -384,8 +418,19 @@ from application import app
 @app.route('/bidding', methods=['GET'])
 @login_required
 def bidding():
-    bids = Bid.query.order_by(asc(Bid.amount)).all()  # Replace `amount` with your column
-    timer = Timer.query.order_by(Timer.id.desc()).first()
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
+    
+    # bids = Bid.query.order_by(asc(Bid.amount)).all()  # Replace `amount` with your column
+    bids = (
+    Bid.query
+    .filter_by(client_id=current_user.client_id)
+    .order_by(Bid.amount.asc())
+    .all()
+    )
+    # timer = Timer.query.order_by(Timer.id.desc()).first()
+    timer = Timer.query.filter_by(client_id=current_user.client_id).order_by(Timer.id.desc()).first()
+
 
     auction_over = False
     now = datetime.now(ZoneInfo("Asia/Singapore"))
@@ -431,9 +476,11 @@ def reset():
         return redirect(url_for('bid'))
 
     # Delete all bids
-    Bid.query.delete()
+    # Bid.query.delete()
+    Bid.query.filter_by(client_id=current_user.client_id).delete()
     # Delete all timers
-    Timer.query.delete()
+    # Timer.query.delete()
+    Timer.query.filter_by(client_id=current_user.client_id).delete()
     db.session.commit()
     flash('All bids and auction timer have been reset.', 'success')
     return redirect(url_for('bid'))

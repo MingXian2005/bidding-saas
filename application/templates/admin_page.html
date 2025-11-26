@@ -1,3 +1,7 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
 {% with messages = get_flashed_messages() %}
     {% if messages %}
       <div class="flash">
@@ -6,23 +10,24 @@
         {% endfor %}
       </div>
     {% endif %}
-  {% endwith %} 
+{% endwith %}
 
-{% block content %}
 <div class="container">
-    <h2>Admin Page</h2>
-    <form method="POST" action="{{ url_for('admin_start_auction') }}">
-        <label for="duration">Auction Duration (minutes):</label>
-        <input type="number" name="duration" id="duration" min="1" value="5" required>
-        <br>
-        <!-- <label for="extra_duration">Extra Auction Duration (minutes):</label>
-        <input type="number" name="extra_duration" id="extra_duration" min="1" value="5" required> -->
-        <button type="submit">Start Auction</button>
-    </form>
-    {% if timer %}
-        <p>Current auction ends at: {{ timer.end_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-    {% else %}
-        <p>No auction timer set.</p>
-    {% endif %}
+    <div class="info-section">
+        <h2>Admin Page</h2>
+
+        <form method="POST" action="{{ url_for('admin_start_auction') }}">
+            <label for="duration">Auction Duration (minutes):</label>
+            <input type="number" name="duration" id="duration" min="1" value="5" required>
+            <button type="submit">Start Auction</button>
+        </form>
+
+        {% if timer %}
+            <p>Current auction ends at: {{ timer.end_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        {% else %}
+            <p>No auction timer set.</p>
+        {% endif %}
+    </div>
 </div>
+
 {% endblock %}

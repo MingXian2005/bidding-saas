@@ -39,6 +39,8 @@ def generate_display_name():
 @admin_required
 
 def admin():
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
     return render_template('admin.html', title="Admin Homepage")
 
 @app.route('/admin/register', methods=['GET', 'POST'])
@@ -46,6 +48,9 @@ def admin():
 @admin_required
 
 def admin_register():
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
+    
     form = RegistrationForm()
     if form.validate_on_submit():
         display_name = form.display_name.data
@@ -60,8 +65,9 @@ def admin_register():
 
         new_user = Users(
         IdentificationKey=IdentificationKey,
-        display_name=display_name  # assign anonymous name
+        display_name=display_name,  # assign anonymous name
         )
+        new_user.client_id = current_user.client_id 
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
@@ -74,6 +80,9 @@ def admin_register():
 @login_required
 @admin_required
 def admin_page():
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
+    
     form = TimerForm()
     # timer = Timer.query.order_by(Timer.id.desc()).first()
 
@@ -115,6 +124,9 @@ def admin_page():
 @login_required
 @admin_required
 def admin_start_auction():
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
+    
     # You can get duration from a form or use a default
     duration = int(request.form.get('duration', 5))  # default 5 minutes if not provided
     # extra_duration = int(request.form.get('extra_duration', 5))  # default 5 minutes if not provided
@@ -127,9 +139,16 @@ def admin_start_auction():
     print(end_time, 'end time')
     print(force_end_time, 'force end time')
     # Remove old timers
-    Timer.query.delete()
+    # Timer.query.delete()
+    Timer.query.filter_by(client_id=current_user.client_id).delete()
     db.session.commit()
-    timer = Timer(end_time=end_time, force_end_time=force_end_time, start_time=start_time)
+    # timer = Timer(end_time=end_time, force_end_time=force_end_time, start_time=start_time)
+    timer = Timer(
+        end_time=end_time,
+        force_end_time=force_end_time,
+        start_time=start_time,
+        client_id=current_user.client_id
+    )
     db.session.add(timer)
     db.session.commit()
     flash(f'Auction timer set for {duration} minutes.', 'success')
@@ -139,6 +158,9 @@ def admin_start_auction():
 @login_required
 @admin_required
 def admin_init():
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
+    
     form = InitialsForm()
     return render_template('admin_init.html', form=form, title="Admin Init")
 
@@ -146,13 +168,17 @@ def admin_init():
 @login_required
 @admin_required
 def admin_init_post():
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
+    
     form = InitialsForm()
     if form.validate_on_submit():
         StartingBid = form.StartingBid.data
         BidDecrement = form.BidDecrement.data
-        Initials.query.delete()
+        # Initials.query.delete()
+        Initials.query.filter_by(client_id=current_user.client_id).delete()
         db.session.commit()
-        new_initials = Initials(StartingBid=StartingBid, BidDecrement=BidDecrement)
+        new_initials = Initials(StartingBid=StartingBid, BidDecrement=BidDecrement, client_id=current_user.client_id)
         db.session.add(new_initials)
         db.session.commit()
         flash('New initials set successfully!', 'success')
@@ -163,7 +189,11 @@ def admin_init_post():
 @login_required
 @admin_required
 def admin_users():
-    users = Users.query.filter_by(sys_admin=False).all()
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
+    
+    # users = Users.query.filter_by(sys_admin=False).all()
+    users = Users.query.filter_by(client_id=current_user.client_id, sys_admin=False, is_admin = False).all()
     return render_template('admin_users.html', users=users)
 
 @app.route('/admin/users/<int:user_id>/toggle_block', methods=['POST'])
@@ -181,6 +211,9 @@ def toggle_block_user(user_id):
 @login_required
 @admin_required
 def admin_start():
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
+    
     form = NewTimerForm()
     if form.validate_on_submit():
         start_time = form.start_time.data
@@ -201,7 +234,13 @@ def admin_start():
         Timer.query.delete()
         db.session.commit()
 
-        timer = Timer(start_time=start_time, end_time=end_time, force_end_time=force_end_time)
+        # timer = Timer(start_time=start_time, end_time=end_time, force_end_time=force_end_time)
+        timer = Timer(
+            end_time=end_time,
+            force_end_time=force_end_time,
+            start_time=start_time,
+            client_id=current_user.client_id
+        )
         db.session.add(timer)
         db.session.commit()
         flash(f'Auction timer set.', 'success')
@@ -212,7 +251,11 @@ def admin_start():
 @login_required
 @admin_required
 def admin_rm():
-    bids = Bid.query.order_by(Bid.timestamp.desc()).all()
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
+    
+    # bids = Bid.query.order_by(Bid.timestamp.desc()).all()
+    bids = Bid.query.filter_by(client_id=current_user.client_id).order_by(Bid.timestamp.desc()).all()
     return render_template('admin_rm.html', bids=bids, title="Remove Bids")
 
 @app.route('/admin/rm/<int:bid_id>/delete', methods=['POST'])
@@ -234,6 +277,9 @@ def emit_auction_start():
 @login_required
 @admin_required
 def admin_close():
+    if current_user.is_blocked:
+        return redirect(url_for('blocked'))
+    
     form = NewTimerForm2()
     if form.validate_on_submit():
         start_time = form.start_time.data
@@ -245,7 +291,13 @@ def admin_close():
         Timer.query.delete()
         db.session.commit()
 
-        timer = Timer(start_time=start_time, end_time=end_time, force_end_time=force_end_time)
+        # timer = Timer(start_time=start_time, end_time=end_time, force_end_time=force_end_time)
+        timer = Timer(
+            end_time=end_time,
+            force_end_time=force_end_time,
+            start_time=start_time,
+            client_id=current_user.client_id
+        )
         db.session.add(timer)
         db.session.commit()
 

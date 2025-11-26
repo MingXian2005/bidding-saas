@@ -1,16 +1,17 @@
-# application/__init__.py or wherever you initialize app/socketio
-
-from flask import Flask
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, current_user
-from flask_socketio import SocketIO, join_room, leave_room
+from datetime import datetime
 import os
+from flask_login import LoginManager
+from flask_socketio import SocketIO
 from dotenv import load_dotenv
+from sqlalchemy import text
 
+    # Load .env variables
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key'
+app.secret_key = 'your-secret-key'  # For flash messages
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -18,22 +19,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 socketio = SocketIO(app, async_mode='eventlet')
-
-# --- Socket.IO connect handler ---
-@socketio.on('connect')
-def handle_connect():
-    try:
-        if current_user.is_authenticated and current_user.client_id:
-            room = f'client_{current_user.client_id}'
-            join_room(room)
-            socketio.emit('joined_room', {'room': room}, room=room)
-    except Exception as e:
-        print("socket connect error:", e)
-
-# Import models here
-with app.app_context():
-    from .models import Users, Bid, Timer, Initials, Client
-
 
 with app.app_context():
     from .models import Users, Bid, Timer, Initials, Client

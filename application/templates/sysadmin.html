@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -37,4 +37,21 @@
     </div>
 </body>
 
-</html>
+</html> -->
+
+{% extends "layout.html" %}
+
+{% block title %}System Admin Homepage{% endblock %}
+
+{% block body %}
+
+<div class="container">
+    <div class="info-section">
+        <h2>System Admin Links</h2>
+        <ul>
+            <li><a href="{{ url_for('sysadmin_register') }}">Register New Client</a></li>
+            <li><a href="{{ url_for('sysadmin_users') }}">Manage Users</a></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

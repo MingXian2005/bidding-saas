@@ -3,7 +3,7 @@ from application.models import Users, Timer, Initials, Bid, Client
 from flask_login import current_user, login_required
 from functools import wraps
 from flask import render_template, request, flash, redirect, url_for, abort
-from application.forms import RegistrationForm, TimerForm, InitialsForm, NewTimerForm, NewTimerForm2
+from application.forms import SysAdminRegistrationForm, TimerForm, InitialsForm, NewTimerForm, NewTimerForm2
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -42,31 +42,51 @@ def sysadmin():
 @app.route('/sysadmin/register', methods=['GET', 'POST'])
 @login_required
 @sysadmin_required
-
 def sysadmin_register():
-    form = RegistrationForm()
+    form = SysAdminRegistrationForm()
+    
+    # Populate existing clients
+    form.client_id.choices = [(0, '--- Select Existing Client ---')] + \
+        [(c.id, c.name) for c in Client.query.order_by(Client.name).all()]
+
     if form.validate_on_submit():
         display_name = form.display_name.data
         IdentificationKey = form.IdentificationKey.data
         password = form.password.data
-        
-        # Check if IdentificationKey already exists
-        existing_user = Users.query.filter_by(IdentificationKey=IdentificationKey).first()
-        if existing_user:
-            flash('IdentificationKey already exists. Please choose a different one.', 'danger')
-            return render_template('sysregister.html', form=form, title="Admin Registration")
+        client_id = None
 
+        # Check if IdentificationKey exists
+        if Users.query.filter_by(IdentificationKey=IdentificationKey).first():
+            flash('IdentificationKey already exists.', 'danger')
+            return render_template('sysregister.html', form=form)
+
+        # Create new client if provided
+        if form.new_client_name.data:
+            new_client = Client(name=form.new_client_name.data)
+            db.session.add(new_client)
+            db.session.commit()
+            client_id = new_client.id
+        elif form.client_id.data != 0:
+            client_id = form.client_id.data
+        else:
+            flash('Select or create a client.', 'danger')
+            return render_template('sysregister.html', form=form)
+
+        # Create admin user
         new_user = Users(
-        IdentificationKey=IdentificationKey,
-        display_name=display_name,  # assign anonymous name
-        is_admin=True
+            display_name=display_name,
+            IdentificationKey=IdentificationKey,
+            is_admin=True,
+            client_id=client_id
         )
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
-        flash('User registered successfully!', 'success')
+
+        flash('Admin registered successfully!', 'success')
         return redirect(url_for('sysadmin_register'))
-    return render_template('sysregister.html', form=form, title="Admin Registration")
+
+    return render_template('sysregister.html', form=form)
 
 @app.route('/sysadmin/users')
 @login_required
@@ -86,20 +106,19 @@ def toggle_block_admin(user_id):
     flash(f'User {user.display_name} is now {status}.', 'success')
     return redirect(url_for('sysadmin_users'))
 
-# @app.route('/admin/rm', methods=['GET'])
-# @login_required
-# @sysadmin_required
-# def admin_rm():
-#     bids = Bid.query.order_by(Bid.timestamp.desc()).all()
-#     return render_template('admin_rm.html', bids=bids, title="Remove Bids")
+@app.route('/sysadmin/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@sysadmin_required
+def delete_user_admin(user_id):
+    user = Users.query.get_or_404(user_id)
 
-# @app.route('/admin/rm/<int:bid_id>/delete', methods=['POST'])
-# @login_required
-# @sysadmin_required
-# def delete_bid(bid_id):
-#     bid = Bid.query.get_or_404(bid_id)
-#     db.session.delete(bid)
-#     db.session.commit()
-#     flash(f'Bid {bid_id} has been deleted.', 'success')
-#     return redirect(url_for('admin_rm'))
+    if user.sys_admin:
+        flash("You cannot delete a system admin account!", "danger")
+        return redirect(url_for('sysadmin_users'))
+
+    db.session.delete(user)
+    db.session.commit()
+
+    flash(f'User {user.display_name} has been deleted.', 'success')
+    return redirect(url_for('sysadmin_users'))
 

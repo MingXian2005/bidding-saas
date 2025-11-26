@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, FloatField, IntegerField, DateTimeField
+from wtforms import StringField, PasswordField, SubmitField, FloatField, IntegerField, DateTimeField, SelectField
 from wtforms.validators import InputRequired, Length, NumberRange
+from wtforms.validators import DataRequired, Optional
 
 class RegistrationForm(FlaskForm):
     IdentificationKey = StringField('Identification Key', validators=[InputRequired(), Length(min=4, max=80)])
@@ -8,6 +9,18 @@ class RegistrationForm(FlaskForm):
     display_name = StringField('Display Name', validators=[InputRequired(), Length(min=1, max=80)])
     submit = SubmitField('Register')
 
+class SysAdminRegistrationForm(FlaskForm):
+    display_name = StringField('Display Name', validators=[DataRequired()])
+    IdentificationKey = StringField('Identification Key', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    
+    # For assigning a client
+    client_id = SelectField('Assign Client', coerce=int, validators=[Optional()])
+    
+    # Or create a new client
+    new_client_name = StringField('Or Create New Client', validators=[Optional()])
+    
+    submit = SubmitField('Register Admin')
 
 class BidForm(FlaskForm):
     amount = FloatField('Bid Amount (RM)', validators=[InputRequired(), NumberRange(min=0.01)])

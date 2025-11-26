@@ -1,3 +1,6 @@
+{% extends "layout.html" %}
+
+{% block body %}
 <table>
   <tr><th>Display Name</th><th>IdentificationKey</th><th>Status</th><th>Action</th></tr>
   {% for user in users %}
@@ -13,3 +16,4 @@
   </tr>
   {% endfor %}
 </table>
+{% endblock %}
