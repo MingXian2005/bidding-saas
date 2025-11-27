@@ -211,17 +211,17 @@ def bid():
         if auction_end_time is None:
             flash('No active auction yet.', 'danger')
         elif bid_value >= STARTING_PRICE:
-            flash(f'Your bid must be LOWER than the starting price (S$ {STARTING_PRICE:.2f}).', 'danger')
+            flash(f'Your bid must be LOWER than the starting price (RM {STARTING_PRICE:.2f}).', 'danger')
         elif bid_value > STARTING_PRICE - Decrement: 
-            flash(f'Your bid must be LOWER than the minimum bid decrement (S$ {Decrement:.2f}).', 'danger')
+            flash(f'Your bid must be LOWER than the minimum bid decrement (RM {Decrement:.2f}).', 'danger')
         elif lowest_bid_amount is not None and bid_value > lowest_bid_amount: 
-            flash(f'Your bid must be LOWER than the current lowest bid (S$ {lowest_bid_amount:.2f}).', 'danger')
+            flash(f'Your bid must be LOWER than the current lowest bid (RM {lowest_bid_amount:.2f}).', 'danger')
         elif lowest_bid_amount is not None and bid_value > lowest_bid_amount - Decrement: 
-            flash(f'Your bid must be LOWER than the minimum bid decrement (S$ {Decrement:.2f}).', 'danger')
+            flash(f'Your bid must be LOWER than the minimum bid decrement (RM {Decrement:.2f}).', 'danger')
         elif bid_value < 0.01:
-            flash('Your bid must be at least S$ 0.01.', 'danger')
+            flash('Your bid must be at least RM 0.01.', 'danger')
         elif bid_value < max_bid_amount:
-            flash(f'Your bid must not exceed 20% of the lowest bid (S$ {max_bid_amount:.2f}).', 'danger')
+            flash(f'Your bid must not exceed 20% of the lowest bid (RM {max_bid_amount:.2f}).', 'danger')
         else:
             # Get force end time
             # timer2 = Timer.query.order_by(Timer.id.desc()).first()

@@ -153,9 +153,27 @@
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
+        // function confirmBid() {
+        //     const amount = document.getElementById("amount").value;
+        //     return confirm(`Are you sure you want to place this bid of RM${amount}?`);
+        // }
+
         function confirmBid() {
-            const amount = document.getElementById("amount").value;
-            return confirm(`Are you sure you want to place this bid of RM${amount}?`);
+            const amountInput = document.getElementById("amount");
+            const amount = parseFloat(amountInput.value);
+
+            if (isNaN(amount)) {
+                alert("Please enter a valid number.");
+                return false;
+            }
+
+            // Format the number to Singapore currency style
+            const formattedAmount = amount.toLocaleString('en-SG', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            return confirm(`Are you sure you want to place this bid of RM${formattedAmount}?`);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -227,10 +245,31 @@
             });
 
             //Starting Bid and Decrement
+            // socket.on('initials_updated', (data) => {
+            //     console.log("Initials updated:", data);
+
+            //     // Money formatter
+            //     function formatMoney(n) {
+            //         return Number(n || 0).toLocaleString('en-SG', {
+            //             minimumFractionDigits: 2,
+            //             maximumFractionDigits: 2
+            //         });
+            //     }
+
+            //     if (data.StartingBid !== undefined) {
+            //         document.getElementById('startingBid').innerText =
+            //             formatMoney(data.StartingBid);
+            //     }
+
+            //     if (data.BidDecrement !== undefined) {
+            //         document.getElementById('bidDecrement').innerText =
+            //             formatMoney(data.BidDecrement);
+            //     }
+            // });
+
             socket.on('initials_updated', (data) => {
                 console.log("Initials updated:", data);
 
-                // Money formatter
                 function formatMoney(n) {
                     return Number(n || 0).toLocaleString('en-SG', {
                         minimumFractionDigits: 2,
@@ -238,15 +277,36 @@
                     });
                 }
 
-                if (data.StartingBid !== undefined) {
-                    document.getElementById('startingBid').innerText =
-                        formatMoney(data.StartingBid);
+                let startingBid = data.StartingBid !== undefined ? data.StartingBid : parseFloat(document.getElementById('startingBid').innerText.replace(/,/g, ''));
+                let bidDecrement = data.BidDecrement !== undefined ? data.BidDecrement : parseFloat(document.getElementById('bidDecrement').innerText.replace(/,/g, ''));
+
+                // Update displayed Starting Bid and Decrement
+                if (data.StartingBid !== undefined) document.getElementById('startingBid').innerText = formatMoney(startingBid);
+                if (data.BidDecrement !== undefined) document.getElementById('bidDecrement').innerText = formatMoney(bidDecrement);
+
+                // Update Min and Max bid dynamically
+                const lowestBidDiv = document.getElementById("lowest-bid");
+                const minBidElement = document.getElementById("min-bid");
+                const maxBidElement = document.getElementById("max-bid");
+
+                // Get numeric lowest bid from page
+                let lowestBid = startingBid; // default fallback
+                if (lowestBidDiv) {
+                    const num = parseFloat(lowestBidDiv.innerText.replace(/[^0-9.]/g, ''));
+                    if (!isNaN(num) && num > 0) {
+                        lowestBid = num;
+                    }
                 }
 
-                if (data.BidDecrement !== undefined) {
-                    document.getElementById('bidDecrement').innerText =
-                        formatMoney(data.BidDecrement);
-                }
+                // Min bid = lowest bid - decrement
+                let minBid = lowestBid - bidDecrement;
+                if (minBid < 0) minBid = 0;
+
+                // Max bid = lowest bid * 0.2
+                let maxBid = lowestBid * 0.2;
+
+                if (minBidElement) minBidElement.innerText = "RM" + formatMoney(minBid);
+                if (maxBidElement) maxBidElement.innerText = "RM" + formatMoney(maxBid);
             });
 
             // Update bids and UI on new bid event
