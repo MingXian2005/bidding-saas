@@ -47,15 +47,15 @@ def auth():
         if user and user.check_password(loginform.password.data):
             login_user(user)
             flash('Login successful.', 'success')
-        # Redirect based on role
-        if user.sys_admin:
-            return redirect(url_for('sysadmin'))
-        elif user.is_admin:
-            return redirect(url_for('admin'))
+            # Redirect based on role
+            if user.sys_admin:
+                return redirect(url_for('sysadmin'))
+            elif user.is_admin:
+                return redirect(url_for('admin'))
+            else:
+                return redirect(url_for('bid'))
         else:
-            return redirect(url_for('bid'))
-    else:
-            flash('Invalid Identification Key or password.', 'danger')
+            flash('Invalid Identification Key or password.', 'danger')  
 
     return render_template('login.html', form=loginform, title="Authentication")
 

@@ -63,7 +63,7 @@
                             style="max-height: 300px; max-width: 100%; height: auto; border-radius: 8px;">
                         {% endfor %}
                         {% else %}
-                        <img src="{{ url_for('static', filename='uploads/warehouse.png') }}" alt="Default Image"
+                        <img src="{{ url_for('static', filename='uploads/noimage.png') }}" alt="Default Image"
                             style="max-height: 300px; border-radius: 8px;">
                         {% endif %}
                     </div>
@@ -352,7 +352,7 @@
                 } else {
                     // Show default image if no images
                     const img = document.createElement('img');
-                    img.src = `/static/uploads/warehouse.png`;
+                    img.src = `/static/uploads/noimage.png`;
                     img.alt = 'Default Image';
                     img.style.maxHeight = '300px';
                     img.style.borderRadius = '8px';
