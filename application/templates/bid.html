@@ -55,7 +55,19 @@
 
             <div>
                 <div class="class1">
-                    <img src="../static/uploads/warehouse.png" alt="warehouse.png" style="margin-top: 30px;">
+                    <div class="auction-images text-center" style="margin-top: 30px;">
+                        {% if auction_images %}
+                        {% for image in auction_images %}
+                        <img src="{{ url_for('static', filename='uploads/' + image.image_filename) }}"
+                            alt="Auction Image {{ loop.index }}"
+                            style="max-height: 300px; max-width: 100%; height: auto; border-radius: 8px;">
+                        {% endfor %}
+                        {% else %}
+                        <img src="{{ url_for('static', filename='uploads/warehouse.png') }}" alt="Default Image"
+                            style="max-height: 300px; border-radius: 8px;">
+                        {% endif %}
+                    </div>
+
                     <p style="margin-top: 25px; font-size: 21px;">
                         Address📌: <br>
                         <span id="auction-address">
@@ -115,7 +127,11 @@
                             {{ form.amount.label }}. You need to bid between:<br>
                             Max: <span id="min-bid">RM{{ "{:,.2f}".format(min_bid_amount) }}</span> -
                             Min: <span id="max-bid">RM{{ "{:,.2f}".format(max_bid_amount) }}</span><br>
-                            {{ form.amount(style="margin-top: 30px; width:200px; height:40px; font-size:20px;") }}<br>
+                            {{ form.amount(
+                            style="margin-top: 30px; width:200px; height:40px; font-size:20px;",
+                            inputmode="decimal",
+                            id="amount"
+                            ) }}<br>
                             {% for error in form.amount.errors %}
                             <span style="color: red;">{{ error }}</span><br>
                             {% endfor %}
@@ -160,20 +176,26 @@
 
         function confirmBid() {
             const amountInput = document.getElementById("amount");
-            const amount = parseFloat(amountInput.value);
-
-            if (isNaN(amount)) {
+            const rawValue = amountInput.value.replace(/,/g, ""); // remove commas for validation
+            if (isNaN(rawValue) || rawValue.trim() === "") {
                 alert("Please enter a valid number.");
                 return false;
             }
+            if (!/^\d+(\.\d{1,2})?$/.test(rawValue)) {
+                alert("Your bid must not have more than 2 decimal places.");
+                return false;
+            }
 
-            // Format the number to Singapore currency style
-            const formattedAmount = amount.toLocaleString('en-SG', {
+            // Format for display in the confirm dialog
+            const formattedValue = Number(rawValue).toLocaleString("en-SG", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
 
-            return confirm(`Are you sure you want to place this bid of RM${formattedAmount}?`);
+            // Keep raw value for backend ***
+            amountInput.value = rawValue;
+
+            return confirm(`Are you sure you want to place this bid of RM ${formattedValue}?`);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -309,6 +331,35 @@
                 if (maxBidElement) maxBidElement.innerText = "RM" + formatMoney(maxBid);
             });
 
+            // Update auction images in real-time
+            socket.on('auction_images_updated', (data) => {
+                const imagesContainer = document.querySelector('.auction-images');
+                if (!imagesContainer) return;
+
+                // Clear current images
+                imagesContainer.innerHTML = '';
+
+                if (data.images && data.images.length > 0) {
+                    data.images.forEach((filename, index) => {
+                        const img = document.createElement('img');
+                        img.src = `/static/uploads/${filename}`;
+                        img.alt = `Auction Image ${index + 1}`;
+                        img.className = 'img-fluid mb-3';
+                        img.style.maxHeight = '300px';
+                        img.style.borderRadius = '8px';
+                        imagesContainer.appendChild(img);
+                    });
+                } else {
+                    // Show default image if no images
+                    const img = document.createElement('img');
+                    img.src = `/static/uploads/warehouse.png`;
+                    img.alt = 'Default Image';
+                    img.style.maxHeight = '300px';
+                    img.style.borderRadius = '8px';
+                    imagesContainer.appendChild(img);
+                }
+            });
+
             // Update bids and UI on new bid event
             socket.on('new_bid', (data) => {
                 const logContainer = document.getElementById("bids-log");
@@ -393,6 +444,59 @@
                 const startTime = new Date(timerElement.dataset.startTime + "Z");
                 const endTime = new Date(timerElement.dataset.endTime + "Z");
                 updateTimer(startTime, endTime);
+            }
+        });
+
+        function formatWithCommasAnd2DP(value) {
+            if (!value) return "";
+
+            // Remove unwanted characters
+            value = value.replace(/[^0-9.]/g, "");
+
+            // Only allow one decimal point
+            let parts = value.split(".");
+            if (parts.length > 2) {
+                parts = [parts[0], parts.slice(1).join("")];
+            }
+
+            let integerPart = parts[0];
+            let decimalPart = parts[1] || "";
+
+            // Remove leading zeros unless "0.xxx"
+            integerPart = integerPart.replace(/^0+(?!$)/, "");
+
+            // Limit decimals to 2
+            decimalPart = decimalPart.substring(0, 2);
+
+            // Add comma formatting to integer part
+            if (integerPart) {
+                integerPart = parseInt(integerPart, 10).toLocaleString("en-US");
+            }
+
+            return decimalPart ? `${integerPart}.${decimalPart}` : integerPart;
+        }
+
+        const amountInput = document.getElementById("amount");
+
+        // Live formatting #############################
+        amountInput.addEventListener("input", function () {
+            const currentPos = this.selectionStart;
+            const beforeLength = this.value.length;
+
+            this.value = formatWithCommasAnd2DP(this.value);
+
+            // Fix cursor jump issue when typing
+            const afterLength = this.value.length;
+            this.selectionEnd = currentPos + (afterLength - beforeLength);
+        });
+
+        // Auto-format to 2dp on blur
+        amountInput.addEventListener("blur", function () {
+            if (this.value) {
+                const num = parseFloat(this.value.replace(/,/g, ""));
+                if (!isNaN(num)) {
+                    this.value = num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
             }
         });
     </script>

@@ -1,27 +1,65 @@
 {% extends "layout.html" %}
 
 {% block body %}
-<div class="container">
-    <div class="info-section">
-        <h2>Set Auction Info</h2>
+<div class="container mt-5">
 
-        <form method="POST" action="{{ url_for('admin_info') }}">
-            {{ form.hidden_tag() }}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
 
-            <div class="form-group mb-3">
-                <label>{{ form.title.label.text }}</label><br>
-                {{ form.title(class="form-control") }}
+            <!-- Auction Info Card -->
+            <div class="card mb-5 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">Set Auction Info</h3>
+                    <form method="POST" action="{{ url_for('admin_info') }}">
+                        {{ info_form.hidden_tag() }}
+
+                        <!-- Auction Title -->
+                        <div class="mb-3">
+                            <label for="{{ info_form.title.id }}" class="form-label">Auction Title</label>
+                            <div>
+                                {{ info_form.title(class="form-control", style="display: block; width: 100%;") }}
+                            </div>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="mb-4">
+                            <label for="{{ info_form.address.id }}" class="form-label">Address</label>
+                            <div>
+                                {{ info_form.address(class="form-control", style="display: block; width: 100%;") }}
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-3">
+                            {{ info_form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
             </div>
 
-            <div class="form-group mb-3">
-                <label>{{ form.address.label.text }}</label><br>
-                {{ form.address(class="form-control") }}
+            <!-- Auction Image Card -->
+            <div class="card mb-5 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">Upload Auction Image</h3>
+                    <form method="POST" action="{{ url_for('admin_info') }}" enctype="multipart/form-data">
+                        {{ image_form.hidden_tag() }}
+
+                        <!-- File Input -->
+                        <div class="mb-4">
+                            <label for="{{ image_form.image.id }}" class="form-label">Auction Image</label>
+                            <div>
+                                {{ image_form.image(class="form-control", style="display: block; width: 100%;") }}
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            {{ image_form.submit(class="btn btn-success") }}
+                        </div>
+                    </form>
+                </div>
             </div>
 
-            <div class="form-group">
-                {{ form.submit(class="btn btn-primary") }}
-            </div>
-        </form>
+        </div>
     </div>
+
 </div>
 {% endblock %}

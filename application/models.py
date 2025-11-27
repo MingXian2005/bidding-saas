@@ -62,7 +62,14 @@ class Initials(db.Model):
     client = db.relationship('Client', backref=db.backref('initials', lazy=True))
 
 class AuctionInfo(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), nullable=False)
-    address = db.Column(db.String(255), nullable=False)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+        id = db.Column(db.Integer, primary_key=True)
+        title = db.Column(db.String(255), nullable=False)
+        address = db.Column(db.String(255), nullable=False)
+        client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+
+class AuctionImage(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        image_filename = db.Column(db.String(255), nullable=False)
+
+        client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+        client = db.relationship('Client', backref=db.backref('auction_images', lazy=True))

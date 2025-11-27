@@ -187,6 +187,9 @@ def bid():
         .subquery()
     )
 
+    # Fetch auction images for this client
+    auction_images = AuctionImage.query.filter_by(client_id=current_user.client_id).all()
+
     # Join to get the actual latest bid for each user
     latest_bids = (
         db.session.query(Bid)
@@ -222,6 +225,8 @@ def bid():
             flash('Your bid must be at least RM 0.01.', 'danger')
         elif bid_value < max_bid_amount:
             flash(f'Your bid must not exceed 20% of the lowest bid (RM {max_bid_amount:.2f}).', 'danger')
+        elif round(bid_value, 2) != bid_value:
+            flash('Your bid must not have more than 2 decimal places.', 'danger')
         else:
             # Get force end time
             # timer2 = Timer.query.order_by(Timer.id.desc()).first()
@@ -409,7 +414,8 @@ def bid():
         max_bid_amount=max_bid_amount,
         desig_auc_strt_time=desig_auc_strt_time,
         auction_force_end_time=auction_force_end_time,
-        auction_info=auction_info
+        auction_info=auction_info,
+        auction_images=auction_images
     )
 
 ################################################################################################

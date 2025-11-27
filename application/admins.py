@@ -1,13 +1,14 @@
+import os
 from application import app, db, socketio
-from application.models import Users, Timer, Initials, Bid, Client, AuctionInfo
+from application.models import Users, Timer, Initials, Bid, Client, AuctionInfo, AuctionImage
 from flask_login import current_user, login_required
 from functools import wraps
 from flask import render_template, request, flash, redirect, url_for, abort
-from application.forms import RegistrationForm, TimerForm, InitialsForm, NewTimerForm, NewTimerForm2, AuctionInfoForm
+from application.forms import RegistrationForm, TimerForm, InitialsForm, NewTimerForm, NewTimerForm2, AuctionInfoForm, AuctionImageForm
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
-
+from werkzeug.utils import secure_filename
 
 scheduler = BackgroundScheduler()
 scheduler.start()
@@ -246,7 +247,7 @@ def admin_start():
 
 
         # Remove old timers
-        Timer.query.delete()
+        Timer.query.filter_by(client_id=current_user.client_id).delete()
         db.session.commit()
 
         # timer = Timer(start_time=start_time, end_time=end_time, force_end_time=force_end_time)
@@ -303,7 +304,7 @@ def admin_close():
         end_time = start_time + timedelta(minutes=duration)
         force_end_time = datetime.now(ZoneInfo("Asia/Singapore")) + timedelta(minutes=10000000)
 
-        Timer.query.delete()
+        Timer.query.filter_by(client_id=current_user.client_id).delete()
         db.session.commit()
 
         # timer = Timer(start_time=start_time, end_time=end_time, force_end_time=force_end_time)
@@ -340,6 +341,52 @@ def admin_close():
         return redirect(url_for('admin_close'))
     return render_template('admin_close.html', form=form, title="Admin Close")
 
+# @app.route('/admin/aucinfo', methods=['GET', 'POST'])
+# @login_required
+# @admin_required
+# def admin_info():
+#     if current_user.is_blocked:
+#         return redirect(url_for('blocked'))
+
+#     form = AuctionInfoForm()
+
+#     # Try to get existing auction info for this client
+#     aucinfo = AuctionInfo.query.filter_by(client_id=current_user.client_id).first()
+
+#     # Pre-fill form if info exists
+#     if aucinfo and request.method == 'GET':
+#         form.title.data = aucinfo.title
+#         form.address.data = aucinfo.address
+
+#     if form.validate_on_submit():
+#         if aucinfo:
+#             # Update existing info
+#             aucinfo.title = form.title.data
+#             aucinfo.address = form.address.data
+#         else:
+#             # Create new info
+#             aucinfo = AuctionInfo(
+#                 title=form.title.data,
+#                 address=form.address.data,
+#                 client_id=current_user.client_id
+#             )
+#             db.session.add(aucinfo)
+
+#         db.session.commit()
+#         socketio.emit(
+#             'auction_info_updated',
+#             {
+#                 'title': aucinfo.title,
+#                 'address': aucinfo.address
+#             },
+#             room=f'client_{current_user.client_id}'
+#         )
+
+#         flash("Auction info saved successfully!", "success")
+#         return redirect(url_for('admin_info'))
+
+#     return render_template("admin_info.html", form=form, title="Auction Info")
+
 @app.route('/admin/aucinfo', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -347,26 +394,27 @@ def admin_info():
     if current_user.is_blocked:
         return redirect(url_for('blocked'))
 
-    form = AuctionInfoForm()
+    # Instantiate both forms with prefixes
+    info_form = AuctionInfoForm(prefix='info')
+    image_form = AuctionImageForm(prefix='image')
 
-    # Try to get existing auction info for this client
+    # Get existing auction info for this client
     aucinfo = AuctionInfo.query.filter_by(client_id=current_user.client_id).first()
 
-    # Pre-fill form if info exists
+    # Pre-fill info form if data exists
     if aucinfo and request.method == 'GET':
-        form.title.data = aucinfo.title
-        form.address.data = aucinfo.address
+        info_form.title.data = aucinfo.title
+        info_form.address.data = aucinfo.address
 
-    if form.validate_on_submit():
+    # Handle Info form submission
+    if info_form.validate_on_submit() and info_form.submit.data:
         if aucinfo:
-            # Update existing info
-            aucinfo.title = form.title.data
-            aucinfo.address = form.address.data
+            aucinfo.title = info_form.title.data
+            aucinfo.address = info_form.address.data
         else:
-            # Create new info
             aucinfo = AuctionInfo(
-                title=form.title.data,
-                address=form.address.data,
+                title=info_form.title.data,
+                address=info_form.address.data,
                 client_id=current_user.client_id
             )
             db.session.add(aucinfo)
@@ -374,14 +422,62 @@ def admin_info():
         db.session.commit()
         socketio.emit(
             'auction_info_updated',
-            {
-                'title': aucinfo.title,
-                'address': aucinfo.address
-            },
+            {'title': aucinfo.title, 'address': aucinfo.address},
             room=f'client_{current_user.client_id}'
         )
-
         flash("Auction info saved successfully!", "success")
         return redirect(url_for('admin_info'))
 
-    return render_template("admin_info.html", form=form, title="Auction Info")
+    # Handle Image form submission
+    elif image_form.validate_on_submit() and image_form.submit.data:
+        image_file = image_form.image.data
+        if image_file:
+            filename = secure_filename(image_file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+            # Save the new file to disk
+            image_file.save(file_path)
+
+            # Get the existing image record for this client
+            old_image = AuctionImage.query.filter_by(client_id=current_user.client_id).first()
+
+            if old_image:
+                # Optional: remove the old file from disk if it exists
+                old_path = os.path.join(app.config['UPLOAD_FOLDER'], old_image.image_filename)
+                try:
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                except Exception as e:
+                    print(f"Failed to remove old image: {e}")
+
+                # Update the existing database record
+                old_image.image_filename = filename
+            else:
+                # No previous image, create a new record
+                old_image = AuctionImage(image_filename=filename, client_id=current_user.client_id)
+                db.session.add(old_image)
+
+            db.session.commit()
+
+            flash("Auction image uploaded successfully!", "success")
+
+            # Update clients in real-time
+            socketio.emit(
+                'auction_images_updated',
+                {
+                    'images': [
+                        img.image_filename for img in AuctionImage.query.filter_by(client_id=current_user.client_id).all()
+                    ]
+                },
+                room=f'client_{current_user.client_id}'
+            )
+
+        return redirect(url_for('admin_info'))
+
+    return render_template(
+        'admin_info.html',
+        info_form=info_form,
+        image_form=image_form,
+        aucinfo=aucinfo,
+        title="Auction Info"
+    )

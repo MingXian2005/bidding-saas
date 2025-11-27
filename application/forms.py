@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FloatField, IntegerField, DateTimeField, SelectField
 from wtforms.validators import InputRequired, Length, NumberRange
 from wtforms.validators import DataRequired, Optional
+from flask_wtf.file import FileField, FileAllowed
 
 class RegistrationForm(FlaskForm):
     IdentificationKey = StringField('Identification Key', validators=[InputRequired(), Length(min=4, max=80)])
@@ -58,5 +59,9 @@ class InitialsForm(FlaskForm):
 
 class AuctionInfoForm(FlaskForm):
     title = StringField("Auction Title", validators=[InputRequired()])
-    address = StringField("Address", validators=[InputRequired()])
+    address = StringField("Address     ", validators=[InputRequired()])
     submit = SubmitField("Save Auction Info")
+
+class AuctionImageForm(FlaskForm):
+    image = FileField('Auction Image', validators=[FileAllowed(['jpg','png'], 'Images only!')])
+    submit = SubmitField('Upload Image')
