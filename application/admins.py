@@ -85,38 +85,6 @@ def admin_page():
         return redirect(url_for('blocked'))
     
     form = TimerForm()
-    # timer = Timer.query.order_by(Timer.id.desc()).first()
-
-    # if timer:
-    #     if timer.end_time:
-    #         timer.end_time = timer.end_time.replace(tzinfo=ZoneInfo('UTC'))
-    #         timer.end_time = timer.end_time.astimezone(ZoneInfo("Asia/Singapore"))
-    # # No need for `else: timer.end_time = None`
-
-    # if timer:
-    #     if timer.force_end_time:
-    #         timer.force_end_time = timer.force_end_time.replace(tzinfo=ZoneInfo('UTC'))
-    #         timer.force_end_time = timer.force_end_time.astimezone(ZoneInfo("Asia/Singapore"))
-
-    # if form.validate_on_submit():
-    #     duration = form.duration.data  # duration in minutes
-    #     extra_duration = form.extra_duration.data
-    #     end_time = datetime.now(ZoneInfo("Asia/Singapore")) + timedelta(minutes=duration)
-    #     force_end_time = end_time + timedelta(minutes=extra_duration)
-
-    #     print("admin timer setting")
-    #     print(end_time, 'end time')
-    #     print(force_end_time, 'force end time')
-
-    #     # Remove old timers if you want only one active
-    #     Timer.query.delete()
-    #     db.session.commit()
-
-    #     timer = Timer(end_time=end_time, force_end_time=force_end_time)
-    #     db.session.add(timer)
-    #     db.session.commit()
-    #     flash(f'Auction timer set for {duration} minutes and force ends after an additional {extra_duration}.', 'success')
-    #     return redirect(url_for('admin_page'))
         
     return render_template('admin_page.html', form=form, title="Admin Page")
 

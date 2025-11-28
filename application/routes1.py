@@ -43,21 +43,33 @@ def index():
 def auth():
     if current_user.is_authenticated:
         return redirect(url_for('bid'))
+
     loginform = LoginForm()
+
     if loginform.validate_on_submit():
         user = Users.query.filter_by(display_name=loginform.display_name.data).first()
-        if user and user.check_password(loginform.password.data):
-            login_user(user)
-            flash('Login successful.', 'success')
-            # Redirect based on role
-            if user.sys_admin:
-                return redirect(url_for('sysadmin'))
-            elif user.is_admin:
-                return redirect(url_for('admin'))
-            else:
-                return redirect(url_for('bid'))
+
+        #Check if account exists
+        if not user:
+            flash('Account does not exist.', 'danger')
+            return redirect(url_for('auth'))
+
+        #If account exists, check password
+        if not user.check_password(loginform.password.data):
+            flash('Incorrect password.', 'danger')
+            return redirect(url_for('auth'))
+
+        # Successful login
+        login_user(user)
+        flash('Login successful.', 'success')
+
+        # Redirect based on roles
+        if user.sys_admin:
+            return redirect(url_for('sysadmin'))
+        elif user.is_admin:
+            return redirect(url_for('admin'))
         else:
-            flash('Invalid Identification Key or password.', 'danger')  
+            return redirect(url_for('bid'))
 
     return render_template('login.html', form=loginform, title="Authentication")
 
@@ -437,14 +449,13 @@ def bidding():
     if current_user.is_blocked:
         return redirect(url_for('blocked'))
     
-    # bids = Bid.query.order_by(asc(Bid.amount)).all()  # Replace `amount` with your column
     bids = (
     Bid.query
     .filter_by(client_id=current_user.client_id)
     .order_by(Bid.amount.asc())
     .all()
     )
-    # timer = Timer.query.order_by(Timer.id.desc()).first()
+    
     timer = Timer.query.filter_by(client_id=current_user.client_id).order_by(Timer.id.desc()).first()
 
 
