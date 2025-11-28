@@ -176,12 +176,16 @@ def admin_init_post():
     if form.validate_on_submit():
         StartingBid = form.StartingBid.data
         BidDecrement = form.BidDecrement.data
+        MaxBidPercentage = form.MaxBidPercentage.data
+
         # Initials.query.delete()
         Initials.query.filter_by(client_id=current_user.client_id).delete()
         db.session.commit()
+
         new_initials = Initials(
             StartingBid=StartingBid,
             BidDecrement=BidDecrement,
+            MaxBidPercentage=MaxBidPercentage,
             client_id=current_user.client_id
         )
         db.session.add(new_initials)
@@ -191,7 +195,8 @@ def admin_init_post():
             'initials_updated',
             {
                 'StartingBid': StartingBid,
-                'BidDecrement': BidDecrement
+                'BidDecrement': BidDecrement,
+                'MaxBidPercentage': float(MaxBidPercentage)
             },
             room=f'client_{current_user.client_id}'
         )
@@ -221,6 +226,22 @@ def toggle_block_user(user_id):
     db.session.commit()
     status = 'blocked' if user.is_blocked else 'unblocked'
     flash(f'User {user.display_name} is now {status}.', 'success')
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_user(user_id):
+    user = Users.query.get_or_404(user_id)
+
+    if user.sys_admin:
+        flash("You cannot delete a system admin account!", "danger")
+        return redirect(url_for('admin_users'))
+
+    db.session.delete(user)
+    db.session.commit()
+
+    flash(f'User {user.display_name} has been deleted.', 'success')
     return redirect(url_for('admin_users'))
 
 @app.route('/admin/start', methods=['GET', 'POST'])
@@ -341,52 +362,6 @@ def admin_close():
         return redirect(url_for('admin_close'))
     return render_template('admin_close.html', form=form, title="Admin Close")
 
-# @app.route('/admin/aucinfo', methods=['GET', 'POST'])
-# @login_required
-# @admin_required
-# def admin_info():
-#     if current_user.is_blocked:
-#         return redirect(url_for('blocked'))
-
-#     form = AuctionInfoForm()
-
-#     # Try to get existing auction info for this client
-#     aucinfo = AuctionInfo.query.filter_by(client_id=current_user.client_id).first()
-
-#     # Pre-fill form if info exists
-#     if aucinfo and request.method == 'GET':
-#         form.title.data = aucinfo.title
-#         form.address.data = aucinfo.address
-
-#     if form.validate_on_submit():
-#         if aucinfo:
-#             # Update existing info
-#             aucinfo.title = form.title.data
-#             aucinfo.address = form.address.data
-#         else:
-#             # Create new info
-#             aucinfo = AuctionInfo(
-#                 title=form.title.data,
-#                 address=form.address.data,
-#                 client_id=current_user.client_id
-#             )
-#             db.session.add(aucinfo)
-
-#         db.session.commit()
-#         socketio.emit(
-#             'auction_info_updated',
-#             {
-#                 'title': aucinfo.title,
-#                 'address': aucinfo.address
-#             },
-#             room=f'client_{current_user.client_id}'
-#         )
-
-#         flash("Auction info saved successfully!", "success")
-#         return redirect(url_for('admin_info'))
-
-#     return render_template("admin_info.html", form=form, title="Auction Info")
-
 @app.route('/admin/aucinfo', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -481,3 +456,20 @@ def admin_info():
         aucinfo=aucinfo,
         title="Auction Info"
     )
+
+@app.route('/admin_reset', methods=['GET', 'POST'])
+@login_required
+def admin_reset():
+    if not current_user.is_admin:
+        flash('Only admins can access this page.', 'danger')
+        return redirect(url_for('bid'))
+
+    if request.method == 'POST':
+        # Delete all bids and timers for this client
+        Bid.query.filter_by(client_id=current_user.client_id).delete()
+        Timer.query.filter_by(client_id=current_user.client_id).delete()
+        db.session.commit()
+        flash('All bids and auction timer have been reset.', 'success')
+        return redirect(url_for('admin_reset'))
+
+    return render_template('admin_reset.html')

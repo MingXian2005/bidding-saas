@@ -266,29 +266,6 @@
                 document.getElementById("auction-address").innerText = data.address;
             });
 
-            //Starting Bid and Decrement
-            // socket.on('initials_updated', (data) => {
-            //     console.log("Initials updated:", data);
-
-            //     // Money formatter
-            //     function formatMoney(n) {
-            //         return Number(n || 0).toLocaleString('en-SG', {
-            //             minimumFractionDigits: 2,
-            //             maximumFractionDigits: 2
-            //         });
-            //     }
-
-            //     if (data.StartingBid !== undefined) {
-            //         document.getElementById('startingBid').innerText =
-            //             formatMoney(data.StartingBid);
-            //     }
-
-            //     if (data.BidDecrement !== undefined) {
-            //         document.getElementById('bidDecrement').innerText =
-            //             formatMoney(data.BidDecrement);
-            //     }
-            // });
-
             socket.on('initials_updated', (data) => {
                 console.log("Initials updated:", data);
 
@@ -320,12 +297,16 @@
                     }
                 }
 
+                // Accept either key emitted by server, with fallback to 0.2
+                let percentage = (data.MaxBidPercentage !== undefined) ? data.MaxBidPercentage
+                    : (data.Percentage !== undefined) ? data.Percentage
+                        : 0.2;
+
                 // Min bid = lowest bid - decrement
                 let minBid = lowestBid - bidDecrement;
                 if (minBid < 0) minBid = 0;
 
-                // Max bid = lowest bid * 0.2
-                let maxBid = lowestBid * 0.2;
+                let maxBid = lowestBid * percentage;
 
                 if (minBidElement) minBidElement.innerText = "RM" + formatMoney(minBid);
                 if (maxBidElement) maxBidElement.innerText = "RM" + formatMoney(maxBid);
