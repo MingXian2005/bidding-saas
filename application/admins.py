@@ -228,22 +228,6 @@ def toggle_block_user(user_id):
     flash(f'User {user.display_name} is now {status}.', 'success')
     return redirect(url_for('admin_users'))
 
-@app.route('/admin/users/<int:user_id>/delete', methods=['POST'])
-@login_required
-@admin_required
-def delete_user(user_id):
-    user = Users.query.get_or_404(user_id)
-
-    if user.sys_admin:
-        flash("You cannot delete a system admin account!", "danger")
-        return redirect(url_for('admin_users'))
-
-    db.session.delete(user)
-    db.session.commit()
-
-    flash(f'User {user.display_name} has been deleted.', 'success')
-    return redirect(url_for('admin_users'))
-
 @app.route('/admin/start', methods=['GET', 'POST'])
 @login_required
 @admin_required

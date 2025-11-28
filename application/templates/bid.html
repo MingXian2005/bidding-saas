@@ -4,6 +4,30 @@
 <head>
     <title>Place a Bid</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+    <style>
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 3px;
+            background-color: #ffffff;
+        }
+
+        .new-log-entry {
+            animation: slide-in 0.5s ease-out forwards;
+        }
+
+        @keyframes slide-in {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -197,6 +221,21 @@
 
             return confirm(`Are you sure you want to place this bid of RM ${formattedValue}?`);
         }
+        function animateLogEntriesOnLoad() {
+            const entries = document.querySelectorAll('#bids-log .log-entry');
+
+            entries.forEach((entry, index) => {
+                // Optional staggered effect (e.g., 100ms between entries)
+                setTimeout(() => {
+                    entry.classList.add('new-log-entry');
+
+                    // Remove class after animation completes
+                    setTimeout(() => {
+                        entry.classList.remove('new-log-entry');
+                    }, 500); // Duration matches @keyframes slide-in
+                }, index * 100);
+            });
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
@@ -346,7 +385,7 @@
                 const logContainer = document.getElementById("bids-log");
                 if (logContainer) {
                     const logEntry = document.createElement("div");
-                    logEntry.className = "log-entry";
+                    logEntry.className = "log-entry new-log-entry";
 
                     const formattedAmount4 = parseFloat(data.amount).toLocaleString('en-SG', {
                         minimumFractionDigits: 2,
@@ -357,6 +396,11 @@
 
                     logEntry.innerText = `${data.timestamp}: User ${displayName} bidded RM${formattedAmount4}`;
                     logContainer.prepend(logEntry);
+
+                                        // Remove the animation class after it has played
+                    setTimeout(() => {
+                        logEntry.classList.remove('new-log-entry');
+                    }, 500); // Match the animation duration
 
                     while (logContainer.children.length > 6) {
                         logContainer.removeChild(logContainer.lastChild);
@@ -426,6 +470,8 @@
                 const endTime = new Date(timerElement.dataset.endTime + "Z");
                 updateTimer(startTime, endTime);
             }
+
+            animateLogEntriesOnLoad();
         });
 
         function formatWithCommasAnd2DP(value) {
