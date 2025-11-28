@@ -1,9 +1,11 @@
 from application import app, db, socketio
 from application.forms import LoginForm, RegistrationForm, BidForm
 from application.models import Users, Bid, Timer, Initials
-from flask import render_template, request, flash, json, jsonify, redirect, url_for
+from flask import render_template, request, flash, json, jsonify, redirect, url_for, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 import os
+import pandas as pd
+from io import BytesIO
 from werkzeug.utils import secure_filename
 from sqlalchemy import asc, func, desc
 from datetime import datetime, timedelta, timezone
@@ -170,11 +172,14 @@ def bid():
     else:
         min_bid_amount = STARTING_PRICE - Decrement # or some fallback
 
+    # Get max bid percentage (default = 0.20)
+    max_percentage = decrement.MaxBidPercentage if decrement else 0.20
+
     # Get Max bid you could
     if lowest_bid_amount is not None and lowest_bid_amount > 0:
-        max_bid_amount = lowest_bid_amount * 0.20
+        max_bid_amount = lowest_bid_amount * max_percentage
     else:
-        max_bid_amount = STARTING_PRICE * 0.20
+        max_bid_amount = STARTING_PRICE * max_percentage
 
     # Subquery: get the latest bid timestamp for each user
     latest_bids_subq = (
@@ -259,11 +264,13 @@ def bid():
             )
             lowest_bid_amount = lowest_bid.amount if lowest_bid else None
 
+            max_percentage = decrement.MaxBidPercentage if decrement else 0.20
+
             # Recalculate max_bid_amount AFTER lowest_bid is refreshed
             if lowest_bid_amount is not None and lowest_bid_amount > 0:
-                max_bid_amount = lowest_bid_amount * 0.20
+                max_bid_amount = lowest_bid_amount * max_percentage
             else:
-                max_bid_amount = STARTING_PRICE * 0.20
+                max_bid_amount = STARTING_PRICE * max_percentage
 
             # bids = Bid.query.order_by(asc(Bid.amount)).all()
             bids = (
@@ -476,26 +483,33 @@ def bidding():
         return redirect(url_for('index'))
 
 ##############################################################################################
-@app.route('/reset', methods=['POST', 'GET'])
-@login_required
-def reset():
-    # Optional: Only allow admin to reset
-    if not current_user.is_admin:
-        flash('Only admin can reset the auction.', 'danger')
-        return redirect(url_for('bid'))
-
-    # Delete all bids
-    # Bid.query.delete()
-    Bid.query.filter_by(client_id=current_user.client_id).delete()
-    # Delete all timers
-    # Timer.query.delete()
-    Timer.query.filter_by(client_id=current_user.client_id).delete()
-    db.session.commit()
-    flash('All bids and auction timer have been reset.', 'success')
-    return redirect(url_for('bid'))
-
-##############################################################################################
 @app.route('/blocked')
 def blocked():
     return render_template('blocked.html')
 ##############################################################################################
+@app.route('/export_ranking_excel')
+@login_required
+def export_ranking_excel():
+    if not (current_user.is_admin or current_user.sys_admin):
+        flash("You do not have permission to export data.", "danger")
+        return redirect(url_for('bid'))
+
+    bids = Bid.query.filter_by(client_id=current_user.client_id).order_by(Bid.amount.asc()).all()
+    
+    data = []
+    for idx, bid in enumerate(bids, start=1):
+        data.append({
+            "Rank": idx,
+            "User": bid.user.display_name if bid.user else bid.user.IdentificationKey,
+            "Bid Amount (RM)": bid.amount,
+            "Timestamp": bid.timestamp_sg.strftime('%Y-%m-%d %H:%M:%S') if hasattr(bid, 'timestamp_sg') else bid.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        })
+
+    df = pd.DataFrame(data)
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Ranking')
+    output.seek(0)
+
+    return send_file(output, download_name="bidding_ranking.xlsx", as_attachment=True)
+##################################################################################################################

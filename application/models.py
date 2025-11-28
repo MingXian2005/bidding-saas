@@ -57,6 +57,7 @@ class Initials(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     StartingBid = db.Column(db.Float, nullable=False)
     BidDecrement = db.Column(db.Float, nullable=False)
+    MaxBidPercentage = db.Column(db.Float, default=0.20)
 
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     client = db.relationship('Client', backref=db.backref('initials', lazy=True))

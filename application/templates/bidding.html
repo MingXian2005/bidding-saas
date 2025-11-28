@@ -71,8 +71,11 @@
                 {% endfor %}
             </tbody>
         </table>
-        <a href="/bid" class="btn"
-            style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-align: center; text-decoration: none; border-radius: 5px;">Home</a>
+        <a href="{{ url_for('export_ranking_excel') }}" class="btn btn-success"
+            style="display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-align: center; text-decoration: none; border-radius: 5px">
+            Export Ranking Excel
+        </a>
+
     </div>
     <script>
         const timerElement = document.getElementById('timer');

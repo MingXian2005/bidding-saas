@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, FloatField, IntegerField, DateTimeField, SelectField
+from wtforms import StringField, PasswordField, SubmitField, FloatField, IntegerField, DateTimeField, SelectField, DecimalField
 from wtforms.validators import InputRequired, Length, NumberRange
 from wtforms.validators import DataRequired, Optional
 from flask_wtf.file import FileField, FileAllowed
@@ -55,6 +55,7 @@ class NewTimerForm2(FlaskForm):
 class InitialsForm(FlaskForm):
     StartingBid = FloatField('Starting Bid ($)', validators=[InputRequired()])
     BidDecrement = FloatField('Next Bid Decrement($)', validators=[InputRequired()])
+    MaxBidPercentage = DecimalField('Max Bid % (e.g. 0.20 for 20%)', default=0.20)
     submit = SubmitField('Confirm')
 
 class AuctionInfoForm(FlaskForm):
