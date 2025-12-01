@@ -397,7 +397,7 @@
                     logEntry.innerText = `${data.timestamp}: User ${displayName} bidded RM${formattedAmount4}`;
                     logContainer.prepend(logEntry);
 
-                                        // Remove the animation class after it has played
+                    // Remove the animation class after it has played
                     setTimeout(() => {
                         logEntry.classList.remove('new-log-entry');
                     }, 500); // Match the animation duration
@@ -463,6 +463,26 @@
 
                 updateTimer(startTime, endTime);
             });
+
+            socket.on('timer_extended', function (data) {
+                console.log("Timer extended to:", data.end_time);
+
+                if (!timerElement || !timerElement.dataset.startTime) return;
+
+                const endTime = new Date(data.end_time);   // remove "+Z"
+                const startTime = new Date(timerElement.dataset.startTime);
+
+                // Only update if endTime is in the future
+                const now = new Date();
+                if (endTime <= now) return;
+
+                // Update dataset
+                timerElement.dataset.endTime = data.end_time;
+
+                // Only update the timer display
+                updateTimer(startTime, endTime);
+            });
+
 
             // Initialize timer on page load if data exists
             if (timerElement && timerElement.dataset.startTime && timerElement.dataset.endTime) {

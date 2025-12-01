@@ -260,6 +260,7 @@ def bid():
                 auction_end_time += timedelta(seconds=AUCTION_EXTENSION)
                 timer.end_time = auction_end_time
                 db.session.add(timer)
+                db.session.commit()
                 socketio.emit('timer_extended', {'end_time': auction_end_time.astimezone(timezone.utc).isoformat()}, room=room)
 
             # Save bid
